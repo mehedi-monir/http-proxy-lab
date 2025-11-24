@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTTP Proxy Server Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🌐 HTTP Web Proxy Server</h1>
+            <div class="server-status">
+                <span class="status-indicator {{ 'running' if server_running else 'stopped' }}"></span>
+                <span class="status-text">{{ 'RUNNING' if server_running else 'STOPPED' }}</span>
+            </div>
+        </header>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <div class="stat-label">Total Requests</div>
+                    <div class="stat-value" id="total-requests">{{ stats.total_requests }}</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🚫</div>
+                <div class="stat-content">
+                    <div class="stat-label">Blocked Requests</div>
+                    <div class="stat-value" id="blocked-requests">{{ stats.blocked_requests }}</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💾</div>
+                <div class="stat-content">
+                    <div class="stat-label">Cached Items</div>
+                    <div class="stat-value" id="cached-items">{{ stats.cached_items }}</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🔒</div>
+                <div class="stat-content">
+                    <div class="stat-label">Blocked Sites</div>
+                    <div class="stat-value" id="blocked-sites-count">{{ stats.blocked_sites_count }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Controls -->
+        <div class="control-panel">
+            <h2>🎛️ Server Controls</h2>
+            <div class="button-grid">
+                <button class="btn btn-start" onclick="startServer()">
+                    <span class="btn-icon">▶️</span> Start Server
+                </button>
+                <button class="btn btn-stop" onclick="stopServer()">
+                    <span class="btn-icon">⏹️</span> Stop Server
+                </button>
+                <button class="btn btn-clear" onclick="clearCache()">
+                    <span class="btn-icon">🗑️</span> Clear Cache
+                </button>
+                <button class="btn btn-clear" onclick="clearLogs()">
+                    <span class="btn-icon">📝</span> Clear Logs
+                </button>
+                <button class="btn btn-view" onclick="window.location.href='/logs'">
+                    <span class="btn-icon">📋</span> View Logs
+                </button>
+            </div>
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="two-column">
+            <!-- Left Column: Block Sites -->
+            <div class="panel">
+                <h2>🚫 Website Blocking</h2>
+                
+                <!-- Quick Block Buttons -->
+                <div class="quick-actions">
+                    <h3>Quick Block Popular Sites</h3>
+                    <div class="button-grid-small">
+                        <button class="btn-quick" onclick="quickBlock('youtube')">YouTube</button>
+                        <button class="btn-quick" onclick="quickBlock('facebook')">Facebook</button>
+                        <button class="btn-quick" onclick="quickBlock('twitter')">Twitter</button>
+                        <button class="btn-quick" onclick="quickBlock('instagram')">Instagram</button>
+                    </div>
+                </div>
+
+                <!-- Custom Block Form -->
+                <div class="block-form">
+                    <h3>Block Custom Website</h3>
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="blockInput" 
+                            placeholder="example.com or www.example.com"
+                            onkeypress="if(event.key==='Enter') blockSite()"
+                        >
+                        <button class="btn btn-add" onclick="blockSite()">
+                            Block Site
+                        </button>
+                    </div>
+                    <div class="help-text">
+                        💡 Enter domain like: youtube.com, facebook.com, etc.
+                    </div>
+                </div>
+
+                <!-- Blocked Sites List -->
+                <div class="blocked-list">
+                    <h3>Currently Blocked Sites ({{ blocked_sites|length }})</h3>
+                    <div id="blockedSitesList">
+                        {% if blocked_sites %}
+                            {% for site in blocked_sites %}
+                            <div class="blocked-item">
+                                <span class="blocked-site-name">🔒 {{ site }}</span>
+                                <button class="btn-unblock" onclick="unblockSite('{{ site }}')">
+                                    Unblock
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="empty-state">
+                                <p>No sites blocked yet</p>
+                                <p class="empty-state-hint">Add websites above to start blocking</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Instructions -->
+            <div class="panel">
+                <h2>📖 Setup Instructions</h2>
+                
+                <div class="instruction-card">
+                    <div class="instruction-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Start the Proxy Server</h3>
+                            <p>Click the "Start Server" button above to activate the proxy server on port 8080.</p>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Configure Your Browser</h3>
+                            <p>Set your browser's proxy settings:</p>
+                            <div class="code-box">
+                                <strong>HTTP Proxy:</strong> localhost<br>
+                                <strong>Port:</strong> 8080
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Add Websites to Block</h3>
+                            <p>Use Quick Block buttons or enter custom domains to block specific websites.</p>
+                        </div>
+                    </div>
+
+                    <div class="instruction-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Start Browsing</h3>
+                            <p>Browse the internet through the proxy. Blocked sites will be automatically filtered.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="browser-config">
+                    <h3>🔧 Browser Configuration Guide</h3>
+                    <details>
+                        <summary>Firefox</summary>
+                        <ol>
+                            <li>Settings → Network Settings</li>
+                            <li>Manual proxy configuration</li>
+                            <li>HTTP Proxy: localhost, Port: 8080</li>
+                            <li>Check "Use this proxy for HTTPS"</li>
+                        </ol>
+                    </details>
+                    <details>
+                        <summary>Chrome</summary>
+                        <ol>
+                            <li>Settings → System → Open proxy settings</li>
+                            <li>LAN Settings → Proxy server</li>
+                            <li>Address: localhost, Port: 8080</li>
+                        </ol>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proxy Server Logs</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📋 Access Logs</h1>
+            <button class="btn btn-back" onclick="window.location.href='/'">
+                ← Back to Dashboard
+            </button>
+        </header>
+
+        <div class="panel">
+            <div class="logs-header">
+                <h2>Recent Activity (Last 200 requests)</h2>
+                <button class="btn btn-refresh" onclick="location.reload()">🔄 Refresh</button>
+            </div>
+
+            <div class="logs-table-container">
+                <table class="logs-table">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>URL</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Blocked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if logs %}
+                            {% for log in logs %}
+                            <tr class="{{ 'blocked-row' if log[4] == 1 else '' }}">
+                                <td class="timestamp">{{ log[5] }}</td>
+                                <td class="url">{{ log[1] }}</td>
+                                <td class="method">{{ log[2] }}</td>
+                                <td class="status status-{{ log[3] }}">{{ log[3] }}</td>
+                                <td class="blocked">
+                                    {% if log[4] == 1 %}
+                                        <span class="badge badge-blocked">🚫 Blocked</span>
+                                    {% else %}
+                                        <span class="badge badge-allowed">✅ Allowed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" class="empty-logs">
+                                    <div class="empty-state">
+                                        <p>No logs yet</p>
+                                        <p class="empty-state-hint">Start browsing to see activity</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
